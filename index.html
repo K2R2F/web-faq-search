@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>会計年度任用職員制度の運用に係る事務処理マニュアル｜FAQ・マニュアル本文検索</title>
+    <link rel="stylesheet" href="./assets/styles.css" />
+  </head>
+  <body>
+    <header class="app-header">
+      <div>
+        <h1>
+          <span class="title-primary">会計年度任用職員制度の運用に係る事務処理マニュアル</span>
+          <span class="title-secondary">FAQ・マニュアル本文検索</span>
+        </h1>
+        <a class="source-link" href="https://www.soumu.go.jp/main_sosiki/jichi_gyousei/koumuin_seido/kaikeinendo_ninyou.html" target="_blank" rel="noopener noreferrer">総務省｜会計年度任用職員制度等 <span aria-hidden="true">↗</span></a>
+      </div>
+      <div class="meta" id="metadata">データ読込中</div>
+    </header>
+
+    <main class="layout">
+      <section class="search-pane" aria-label="検索条件">
+        <label class="search-label" for="query">検索語</label>
+        <input id="query" class="search-input" type="search" autocomplete="off" placeholder="例: 休暇 繰り越し" />
+
+        <div class="keyword-presets" aria-label="よく使うキーワード">
+          <p class="keyword-presets-label">よく使うキーワード</p>
+          <div id="keyword-presets" class="keyword-presets-list"></div>
+        </div>
+
+        <button id="qa-list-button" class="qa-list-button" type="button" aria-pressed="false">Q&amp;A一覧</button>
+
+        <div class="control-row" role="radiogroup" aria-label="検索対象">
+          <label><input type="radio" name="mode" value="all" checked /> 全体</label>
+          <label><input type="radio" name="mode" value="qa" /> Q&amp;A</label>
+          <label><input type="radio" name="mode" value="manual" /> 本文</label>
+        </div>
+
+        <label class="select-label" for="filter">分類・章</label>
+        <select id="filter">
+          <option value="">すべて</option>
+        </select>
+
+        <p class="notice">検索語はこのブラウザ内だけで処理します。個別案件の正式判断は原典と所属団体の規程で確認してください。</p>
+      </section>
+
+      <section class="results-pane" aria-live="polite">
+        <div class="results-summary" id="summary">検索語を入力してください。</div>
+        <div id="results" class="results"></div>
+      </section>
+
+      <aside class="detail-pane" aria-label="詳細">
+        <div id="detail" class="detail">
+          <h2>詳細</h2>
+          <p>検索結果を選択すると、該当するQ&amp;Aまたは本文を表示します。</p>
+        </div>
+      </aside>
+    </main>
+
+    <script src="./assets/app.js" type="module"></script>
+  </body>
+</html>

@@ -1,0 +1,12 @@
+{
+  "name": "kaikeinendo-faq-search",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node scripts/build-index.mjs",
+    "check": "node --check scripts/build-index.mjs && node --check scripts/serve.mjs && node --check assets/app.js && node tests/validate-index.mjs",
+    "test": "node tests/validate-index.mjs",
+    "serve": "node scripts/serve.mjs"
+  }
+}
