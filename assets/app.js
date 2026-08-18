@@ -4,6 +4,7 @@ const state = {
   toc: [],
   metadata: null,
   qaListMode: true,
+  selectedResultId: null,
 };
 
 const keywordPresets = [
@@ -210,6 +211,33 @@ function buildItems() {
   return [...qaItems, ...manualItems];
 }
 
+function buildAllItems() {
+  return [...buildQaItems(), ...buildManualItems()];
+}
+
+function findItemById(id) {
+  return buildAllItems().find((entry) => entry.id === id);
+}
+
+function detailElementId(item) {
+  return `detail-inline-${item.id.replace(/[^a-z0-9_-]/gi, "-")}`;
+}
+
+function resultButtonA11yAttrs(item, isSelected) {
+  const controls = isSelected ? ` aria-controls="${escapeHtml(detailElementId(item))}"` : "";
+  return `aria-expanded="${isSelected}"${controls}`;
+}
+
+function focusResultButton(id) {
+  const button = resultsEl.querySelector(`button[data-result-id="${CSS.escape(id)}"]`);
+  button?.focus({ preventScroll: true });
+}
+
+function clearSelection() {
+  state.selectedResultId = null;
+  detailEl.innerHTML = "<h2>詳細</h2><p>検索結果を選択すると、該当するQ&amp;Aまたは本文を表示します。</p>";
+}
+
 function renderFilters() {
   const current = filterEl.value;
   const labels = new Map();
@@ -256,16 +284,22 @@ function renderQaList() {
   summaryEl.textContent = `Q&A一覧 ${qaItems.length}件を表示しています。`;
   let currentCategory = "";
   resultsEl.innerHTML = qaItems.map((item) => {
+    const isSelected = state.selectedResultId === item.id;
     const categoryHeading = item.categoryLabel !== currentCategory
       ? `<h2 class="qa-index-category">${escapeHtml(item.categoryLabel)}</h2>`
       : "";
     currentCategory = item.categoryLabel;
-    return `${categoryHeading}<article class="result qa-index-item" tabindex="0" role="button" data-result-id="${escapeHtml(item.id)}">
-      <span class="qa-index-number">${escapeHtml(item.questionNo)}</span>
-      <span class="qa-index-question">${escapeHtml(item.question)}</span>
+    return `${categoryHeading}<article class="result qa-index-item${isSelected ? " is-selected" : ""}" data-result-id="${escapeHtml(item.id)}">
+      <button class="result-select qa-index-select" type="button" data-result-id="${escapeHtml(item.id)}" ${resultButtonA11yAttrs(item, isSelected)}>
+        <span class="qa-index-number">${escapeHtml(item.questionNo)}</span>
+        <span class="qa-index-question">${escapeHtml(item.question)}</span>
+      </button>
+      ${isSelected ? renderInlineDetail(item, terms()) : ""}
     </article>`;
   }).join("");
-  detailEl.innerHTML = "<h2>回答</h2><p>中央のQ&amp;Aを選択すると、回答全文を表示します。</p>";
+  const selected = state.selectedResultId ? findItemById(state.selectedResultId) : null;
+  if (selected) renderDetail(selected, terms());
+  else detailEl.innerHTML = "<h2>回答</h2><p>中央のQ&amp;Aを選択すると、回答全文を表示します。</p>";
 }
 
 function render() {
@@ -281,7 +315,7 @@ function render() {
   if (searchTerms.length === 0) {
     summaryEl.textContent = "検索語を入力してください。";
     resultsEl.innerHTML = "";
-    detailEl.innerHTML = "<h2>詳細</h2><p>検索結果を選択すると、該当するQ&amp;Aまたは本文を表示します。</p>";
+    clearSelection();
     return;
   }
 
@@ -298,23 +332,51 @@ function render() {
     const body = isQa ? item.answer : item.text;
     const badge = isQa ? "Q&A" : "本文";
     const source = isQa ? `${item.categoryLabel} / ${item.questionNo} / 行 ${item.sourceLine}` : `${item.sectionPath.join(" / ")} / 行 ${item.sourceLine}`;
-    return `<article class="result" tabindex="0" role="button" data-result-id="${escapeHtml(item.id)}">
-      <div class="result-head"><span class="badge">${badge}</span><span class="source">${escapeHtml(source)}</span></div>
-      <h2>${highlight(item.title, searchTerms)}</h2>
-      <p>${snippet(body, searchTerms)}</p>
+    const isSelected = state.selectedResultId === item.id;
+    return `<article class="result${isSelected ? " is-selected" : ""}" data-result-id="${escapeHtml(item.id)}">
+      <button class="result-select" type="button" data-result-id="${escapeHtml(item.id)}" ${resultButtonA11yAttrs(item, isSelected)}>
+        <div class="result-head"><span class="badge">${badge}</span><span class="source">${escapeHtml(source)}</span></div>
+        <h2>${highlight(item.title, searchTerms)}</h2>
+        <p>${snippet(body, searchTerms)}</p>
+      </button>
+      ${isSelected ? renderInlineDetail(item, searchTerms) : ""}
     </article>`;
   }).join("");
-  if (ranked[0]) renderDetail(ranked[0].item, searchTerms);
+  const selected = state.selectedResultId ? ranked.find(({ item }) => item.id === state.selectedResultId)?.item : null;
+  if (selected) renderDetail(selected, searchTerms);
+  else if (ranked[0]) renderDetail(ranked[0].item, searchTerms);
   else detailEl.innerHTML = "<h2>詳細</h2><p>表示できる結果がありません。</p>";
 }
 
-function renderDetail(item, searchTerms = terms()) {
+function renderDetailHtml(item, searchTerms = terms(), options = {}) {
   const isQa = item.type === "qa";
   const body = isQa ? item.answer : item.text;
   const source = isQa ? `${item.categoryLabel} / ${item.questionNo} / MD ${item.sourceLine}行目` : `${item.sectionPath.join(" / ")} / MD ${item.sourceLine}行目`;
-  detailEl.innerHTML = `<div class="result-head"><span class="badge">${isQa ? "公式Q&A" : "マニュアル本文"}</span><span class="source">${escapeHtml(source)}</span></div>
+  const closeButton = options.closable ? `<button class="inline-detail-close" type="button" data-close-detail>閉じる</button>` : "";
+  return `<div class="detail-heading-row">
+      <div class="result-head"><span class="badge">${isQa ? "公式Q&A" : "マニュアル本文"}</span><span class="source">${escapeHtml(source)}</span></div>
+      ${closeButton}
+    </div>
     <h2>${highlight(item.title, searchTerms)}</h2>
     <div class="detail-body">${renderReadableText(body, searchTerms)}</div>`;
+}
+
+function renderDetail(item, searchTerms = terms()) {
+  detailEl.innerHTML = renderDetailHtml(item, searchTerms);
+}
+
+function renderInlineDetail(item, searchTerms = terms()) {
+  return `<div id="${escapeHtml(detailElementId(item))}" class="inline-detail">
+    ${renderDetailHtml(item, searchTerms, { closable: true })}
+  </div>`;
+}
+
+function selectResult(id) {
+  const item = findItemById(id);
+  if (!item) return;
+  state.selectedResultId = id;
+  render();
+  focusResultButton(id);
 }
 
 async function loadJson(name) {
@@ -371,6 +433,7 @@ function updateUrl() {
 
 queryInput.addEventListener("input", () => {
   state.qaListMode = false;
+  clearSelection();
   updateUrl();
   render();
 });
@@ -378,12 +441,14 @@ keywordPresetsEl.addEventListener("click", (event) => {
   const button = event.target.closest("button[data-query]");
   if (!button) return;
   state.qaListMode = false;
+  clearSelection();
   queryInput.value = button.dataset.query || "";
   updateUrl();
   render();
 });
 qaListButton.addEventListener("click", () => {
   state.qaListMode = !state.qaListMode;
+  clearSelection();
   if (state.qaListMode) {
     queryInput.value = "";
     filterEl.value = "";
@@ -391,23 +456,27 @@ qaListButton.addEventListener("click", () => {
   updateUrl();
   render();
 });
-filterEl.addEventListener("change", render);
-filterEl.addEventListener("change", updateUrl);
-resultsEl.addEventListener("click", (event) => {
-  const result = event.target.closest(".result");
-  if (!result) return;
-  const item = buildItems().find((entry) => entry.id === result.dataset.resultId);
-  if (item) renderDetail(item);
+filterEl.addEventListener("change", () => {
+  clearSelection();
+  render();
+  updateUrl();
 });
-resultsEl.addEventListener("keydown", (event) => {
-  if (event.key !== "Enter" && event.key !== " ") return;
-  const result = event.target.closest(".result");
-  if (!result) return;
-  event.preventDefault();
-  result.click();
+resultsEl.addEventListener("click", (event) => {
+  const closeButton = event.target.closest("[data-close-detail]");
+  if (closeButton) {
+    const previousResultId = state.selectedResultId;
+    clearSelection();
+    render();
+    if (previousResultId) focusResultButton(previousResultId);
+    return;
+  }
+  const button = event.target.closest("button[data-result-id]");
+  if (!button) return;
+  selectResult(button.dataset.resultId);
 });
 document.querySelectorAll("input[name='mode']").forEach((input) => input.addEventListener("change", () => {
   state.qaListMode = false;
+  clearSelection();
   updateUrl();
   render();
 }));
