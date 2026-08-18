@@ -99,14 +99,14 @@ function parseManual(lines) {
   let bufferLine = 1;
 
   function flushParagraph() {
-    const text = buffer.join("").replace(/\s+/g, " ").trim();
+    const text = buffer.join("\n").replace(/[ \t]+/g, " ").trim();
     if (text.length >= 8) {
       manualEntries.push({
         id: `manual-${String(manualEntries.length + 1).padStart(4, "0")}`,
         sectionPath,
         heading: sectionPath.at(-1) ?? "本文",
         text,
-        snippet: text.slice(0, 180),
+        snippet: text.replace(/\s+/g, " ").slice(0, 180),
         sourceLine: bufferLine,
         normalizedText: normalizeText(`${sectionPath.join(" ")} ${text}`)
       });

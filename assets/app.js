@@ -90,6 +90,97 @@ function highlight(value, searchTerms) {
   return html;
 }
 
+function isTableLine(line) {
+  return /^\s*\|.+\|\s*$/.test(line) || line.includes("\t");
+}
+
+function isListLine(line) {
+  return /^\s*(?:[-*・]|[0-9０-９]+[.)）]|[①②③④⑤⑥⑦⑧⑨⑩])\s*/u.test(line);
+}
+
+function splitSentences(value) {
+  const sentences = [];
+  let current = "";
+  const closers = new Set(["」", "』", "）", ")", "】", "］", "]"]);
+  const chars = [...value];
+  for (let index = 0; index < chars.length; index += 1) {
+    const char = chars[index];
+    current += char;
+    if (!/[。！？]/u.test(char)) continue;
+    while (closers.has(chars[index + 1])) {
+      index += 1;
+      current += chars[index];
+    }
+    sentences.push(current.trim());
+    current = "";
+  }
+  if (current.trim()) sentences.push(current.trim());
+  return sentences;
+}
+
+function splitReadableParagraph(value) {
+  const compact = value.replace(/[ \t]+/g, " ").trim();
+  if (compact.length <= 160) return [compact];
+
+  const sentences = splitSentences(compact);
+  if (sentences.length <= 1) return [compact];
+
+  const groups = [];
+  let group = "";
+  let count = 0;
+  for (const sentence of sentences) {
+    const next = group ? `${group}${sentence}` : sentence;
+    if (group && (next.length > 190 || count >= 2)) {
+      groups.push(group);
+      group = sentence;
+      count = 1;
+      continue;
+    }
+    group = next;
+    count += 1;
+  }
+  if (group) groups.push(group);
+  return groups;
+}
+
+function renderReadableText(value, searchTerms) {
+  const blocks = [];
+  let current = [];
+  let currentType = "";
+
+  function flush() {
+    if (current.length === 0) return;
+    blocks.push({ type: currentType, lines: current });
+    current = [];
+    currentType = "";
+  }
+
+  for (const rawLine of value.replace(/\r\n?/g, "\n").split("\n")) {
+    const line = rawLine.trim();
+    if (!line) {
+      flush();
+      continue;
+    }
+    const type = isTableLine(line) ? "table" : isListLine(line) ? "list" : "paragraph";
+    if (current.length > 0 && type !== currentType) flush();
+    currentType = type;
+    current.push(line);
+  }
+  flush();
+
+  return blocks.map((block) => {
+    if (block.type === "table") {
+      return `<div class="detail-table" role="region" aria-label="表形式テキスト"><pre>${highlight(block.lines.join("\n"), searchTerms)}</pre></div>`;
+    }
+    if (block.type === "list") {
+      return `<div class="detail-list">${block.lines.map((line) => `<p>${highlight(line, searchTerms)}</p>`).join("")}</div>`;
+    }
+    return splitReadableParagraph(block.lines.join(" "))
+      .map((paragraph) => `<p>${highlight(paragraph, searchTerms)}</p>`)
+      .join("");
+  }).join("");
+}
+
 function buildQaItems() {
   return state.qa.map((item) => ({
     ...item,
@@ -223,7 +314,7 @@ function renderDetail(item, searchTerms = terms()) {
   const source = isQa ? `${item.categoryLabel} / ${item.questionNo} / MD ${item.sourceLine}行目` : `${item.sectionPath.join(" / ")} / MD ${item.sourceLine}行目`;
   detailEl.innerHTML = `<div class="result-head"><span class="badge">${isQa ? "公式Q&A" : "マニュアル本文"}</span><span class="source">${escapeHtml(source)}</span></div>
     <h2>${highlight(item.title, searchTerms)}</h2>
-    <div class="detail-body">${highlight(body, searchTerms)}</div>`;
+    <div class="detail-body">${renderReadableText(body, searchTerms)}</div>`;
 }
 
 async function loadJson(name) {

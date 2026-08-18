@@ -259,16 +259,62 @@ select:focus {
 .detail {
   position: sticky;
   top: 16px;
+  max-height: calc(100vh - 32px);
+  overflow: auto;
   padding: 18px;
 }
 
 .detail h2 {
-  margin: 0 0 8px;
-  font-size: 1.05rem;
+  margin: 0 0 14px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--line);
+  font-size: 1.08rem;
+  line-height: 1.55;
 }
 
 .detail-body {
-  white-space: pre-wrap;
+  max-width: 72ch;
+  font-size: 0.98rem;
+  line-height: 1.9;
+  overflow-wrap: anywhere;
+  word-break: normal;
+}
+
+.detail-body p {
+  margin: 0 0 1em;
+}
+
+.detail-body p:last-child {
+  margin-bottom: 0;
+}
+
+.detail-list {
+  display: grid;
+  gap: 0.4em;
+  margin: 0 0 1em;
+  padding: 10px 12px;
+  border-left: 3px solid var(--accent-soft);
+  background: #fbfcfd;
+}
+
+.detail-list p {
+  margin: 0;
+}
+
+.detail-table {
+  max-width: 100%;
+  margin: 0 0 1em;
+  overflow-x: auto;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: #fbfcfd;
+}
+
+.detail-table pre {
+  margin: 0;
+  padding: 12px;
+  font: 0.9rem/1.65 ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace;
+  white-space: pre;
 }
 
 .result-head {
@@ -329,6 +375,8 @@ mark {
 
   .detail {
     position: static;
+    max-height: none;
+    overflow: visible;
     margin-top: 18px;
   }
 

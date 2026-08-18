@@ -2,11 +2,11 @@
   "title": "会計年度任用職員制度の運用に係る事務処理マニュアル",
   "sourceFile": "source/manual.md",
   "sourceDescription": "総務省公開資料をMarkdown化したもの",
-  "generatedAt": "2026-08-18T03:55:12.952Z",
-  "sourceLength": 103465,
+  "generatedAt": "2026-08-18T05:36:06.398Z",
+  "sourceLength": 104157,
   "qaCount": 111,
   "broadQuestionLineCount": 114,
-  "manualCount": 421,
+  "manualCount": 455,
   "warnings": [
     "独立Q&A見出しは111件です。行頭の問番号参照を含む広めの検出では114件あります。"
   ],

@@ -4,8 +4,9 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "format:manual": "node scripts/format-manual.mjs",
     "build": "node scripts/build-index.mjs",
-    "check": "node --check scripts/build-index.mjs && node --check scripts/serve.mjs && node --check assets/app.js && node tests/validate-index.mjs",
+    "check": "node --check scripts/build-index.mjs && node --check scripts/format-manual.mjs && node --check scripts/serve.mjs && node --check assets/app.js && node tests/validate-index.mjs",
     "test": "node tests/validate-index.mjs",
     "serve": "node scripts/serve.mjs"
   }
