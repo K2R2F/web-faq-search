@@ -5,7 +5,7 @@ import { fileURLToPath } from "node:url";
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const sourcePath = path.join(root, "source", "manual.md");
 const dataDir = path.join(root, "data");
-const expectedQaCount = 111;
+const expectedQaCount = 112;
 
 const categoryLabels = new Map([
   ["1", "全般"],
@@ -188,7 +188,7 @@ function buildMetadata(qaIndex, manualIndex, toc) {
   return {
     sourceName: "会計年度任用職員制度の運用に係る事務処理マニュアル",
     sourceFile: "source/manual.md",
-    sourceVersion: "令和8年3月",
+    sourceVersion: "令和8年10月",
     sourcePublisher: "総務省自治行政局公務員部",
     generatedAt: toc.generatedAt,
     expectedQaCount,
